@@ -16,24 +16,23 @@
 package main
 
 import (
+	"github.com/wl4g/super-devops-scm-agent/pkg/scm"
 	"log"
-	"super-devops-scm-agent/pkg/scm"
 )
 
 func main() {
 	log.Printf("SCM example starting...")
 
-	refresher, err :=scm.NewRefresher("http://localhost:8080/watch",1000)
+	refresher, err := scm.NewRefresher("http://localhost:8080/watch", 1000)
 	if err != nil {
 		log.Panicf("Failed to new refresher. %p", err)
 	}
 
 	// Register config listener.
-	refresher.Registry().Register("listener1", func(data []byte){
+	refresher.Registry().Register("listener1", func(data []byte) {
 		log.Printf("On change config ... for : %s", string(data))
 	})
 
 	// Start.
 	refresher.Watcher().Watch()
 }
-

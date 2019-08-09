@@ -16,7 +16,7 @@
 package scm
 
 import (
-	"super-devops-scm-agent/pkg/common"
+	"github.com/wl4g/super-devops-scm-agent/pkg/common"
 	"sync"
 )
 
