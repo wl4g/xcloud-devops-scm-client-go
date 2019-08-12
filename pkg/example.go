@@ -23,7 +23,7 @@ import (
 func main() {
 	log.Printf("SCM example starting...")
 
-	refresher, err := scm.NewRefresher("http://localhost:8080/watch", 1000)
+	refresher, err := scm.NewRefresher("http://localhost:8080/scm-server", 1000)
 	if err != nil {
 		log.Panicf("Failed to create refresher. %s", err)
 	}
