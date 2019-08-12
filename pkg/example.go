@@ -26,9 +26,10 @@ func main() {
 	// Option.
 	opt := scm.RefreshOption{
 		ServerUri:  "http://localhost:14043/scm-server",
-		Netcard:    "", // Use local host-name.
 		TimeoutMs:  1000,
+		Netcard:    "", // Use local host-name.
 		Group:      "ExampleCollector",
+		Port:       -1,
 		Namespaces: []string{"scm-agent.yml"},
 	}
 

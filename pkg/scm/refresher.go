@@ -28,9 +28,10 @@ type ConfigListener func(meta *ReleaseMeta, release ReleaseMessage)
 
 type RefreshOption struct {
 	ServerUri  string
-	Netcard    string
 	TimeoutMs  int64
+	Netcard    string
 	Group      string
+	Port       int
 	Namespaces []string
 }
 
@@ -97,17 +98,16 @@ func (_self *DefaultRefresher) addHeader(req *http.Request) {
 }
 
 func (_self *DefaultRefresher) refresh(registry *Registry, meta *ReleaseMeta) {
-	// Get fetching url.
-	fetchUrl := _self.ServerUri + UriEndpointRefreshFetch
+	// Get release parameters.
+	releaseI := ReleaseInstance{Host: GetHostAddr(_self.Netcard), Port: -1}
 
-	// Wrap get release parameters.
-	releaseI := GetReleaseInstance(_self.Netcard)
-	get := GetRelease{Instance: *releaseI}
+	get := GetRelease{Instance: releaseI}
 	get.Meta = *meta
 	get.Group = _self.Group
 	get.Namespaces = _self.Namespaces
 
 	// Fetching release sources.
+	fetchUrl := _self.ServerUri + UriEndpointRefreshFetch
 	err, resp, data := _self.doExchange(fetchUrl, get.AsJsonString(), "GET", 4000)
 	if err != nil {
 		log.Printf("Failed to fetch property soruces. %s", err)

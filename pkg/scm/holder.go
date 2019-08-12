@@ -25,23 +25,23 @@ import (
 )
 
 var (
-	regex         = regexp.MustCompile(`(2(5[0-5]{1}|[0-4]\d{1})|[0-1]?\d{1,2})(\.(2(5[0-5]{1}|[0-4]\d{1})|[0-1]?\d{1,2})){3}`)
-	instanceCache *ReleaseInstance
+	regex     = regexp.MustCompile(`(2(5[0-5]{1}|[0-4]\d{1})|[0-1]?\d{1,2})(\.(2(5[0-5]{1}|[0-4]\d{1})|[0-1]?\d{1,2})){3}`)
+	hostCache = ""
 )
 
 /**
  * Get hardware information and process unique identification.
  */
-func GetReleaseInstance(netcard string) *ReleaseInstance {
+func GetHostAddr(netcard string) string {
 	// Get by cache.
-	if instanceCache != nil {
-		return instanceCache
+	if hostCache != "" {
+		return hostCache
 	}
 
 	// Default local host-name.
-	hostname, err := os.Hostname()
+	host, err := os.Hostname()
 	if err != nil {
-		log.Panicf("Failed to Get local hostname. %s", err)
+		log.Panicf("Failed to Get local host. %s", err)
 	}
 
 	/*
@@ -65,9 +65,9 @@ func GetReleaseInstance(netcard string) *ReleaseInstance {
 					if len(regex.FindAllString(_addr, -1)) > 0 {
 						a := strings.Split(_addr, "/")
 						if len(a) >= 2 {
-							hostname = a[0]
+							host = a[0]
 						} else {
-							hostname = _addr
+							host = _addr
 						}
 						break ok
 					}
@@ -75,13 +75,13 @@ func GetReleaseInstance(netcard string) *ReleaseInstance {
 			}
 		}
 	}
-	instanceCache := &ReleaseInstance{Host: hostname, Port: -1}
-	return instanceCache
+	hostCache := host
+	return hostCache
 }
 
 /**
  * Clear instance cache.
  */
 func ClearCache() {
-	instanceCache = nil
+	hostCache = ""
 }

@@ -47,12 +47,12 @@ func (_self *DefaultWatcher) Startup() *DefaultWatcher {
 }
 
 func (_self *DefaultWatcher) createWatchLongPolling() (error, *ReleaseMeta) {
-	// Get release instance.
-	releaseInstance := GetReleaseInstance(_self.refresher.Netcard)
-	// Get watching url.
-	watchUrl := _self.refresher.ServerUri + UriEndpointWatch + "?host=" + releaseInstance.Host + "&port" + string(releaseInstance.Port)
+	// Release instance.
+	releaseI := ReleaseInstance{Host: GetHostAddr(_self.refresher.Netcard), Port: -1}
+	// Watching url.
+	watchUrl := _self.refresher.ServerUri + UriEndpointWatch + "?host=" + releaseI.Host + "&port=" + string(releaseI.Port)
 
-	// Watching.
+	// Do watching.
 	err, resp, data := _self.refresher.doExchange(watchUrl, "", "GET", _self.refresher.TimeoutMs)
 	if err != nil {
 		return err, nil
