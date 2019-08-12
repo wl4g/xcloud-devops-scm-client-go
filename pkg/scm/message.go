@@ -52,6 +52,10 @@ type ReleasePropertySource struct {
 	source map[string]interface{} `json:"source"`
 }
 
+//
+// --- Message for function ---
+//
+
 func (msg *GenericInfo) AsJsonString() string {
 	return common.ToJSONString(msg)
 }

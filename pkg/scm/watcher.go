@@ -52,22 +52,34 @@ func (_self *RefreshWatcher) Startup() *RefreshWatcher {
 
 func (_self *RefreshWatcher) createWatchLongPolling() (error, *ReleaseMeta) {
 	watchUrl := _self.serverUri + "/watch"
-	err, data := _self.doExchange(watchUrl, "", "GET", _self.timeoutMs)
+	err, resp, data := _self.doExchange(watchUrl, "", "GET", _self.timeoutMs)
 	if err != nil {
 		return err, nil
 	}
-	meta := ReleaseMeta{}
-	err = jsoniter.Unmarshal(data, meta)
-	if err != nil {
-		return err, nil
+
+	// Update watching state
+	switch resp.StatusCode {
+	case 200: // On change
+		meta := ReleaseMeta{}
+		err = jsoniter.Unmarshal(data, meta)
+		if err != nil {
+			return err, nil
+		}
+		return nil, &meta
+	case 103:
+		// Not implemented
+	case 304:
+		break // Not modified(next long-polling)
+	default:
+		return &IllegalWatchExceptionError{StatusCode: resp.StatusCode}, nil
 	}
-	return nil, &meta
+	return nil, nil
 }
 
-func (_self *RefreshWatcher) doExchange(url string, params string, method string, timeoutMs int64) (error, []byte) {
+func (_self *RefreshWatcher) doExchange(url string, params string, method string, timeoutMs int64) (error, *http.Response, []byte) {
 	req, err := http.NewRequest(method, url, bytes.NewReader([]byte(params)))
 	if err != nil {
-		return err, nil
+		return err, nil, nil
 	}
 	_self.addHeader(req)
 
@@ -79,15 +91,15 @@ func (_self *RefreshWatcher) doExchange(url string, params string, method string
 	}
 	if err != nil {
 		//log.Printf("Failed to req.")
-		return err, nil
+		return err, resp, nil
 	}
 	ret, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		//log.Printf("Failed to get response body, %p", err)
-		return err, nil
+		return err, resp, nil
 	}
 	//log.Printf("Receive response message, %s", string(ret))
-	return nil, ret
+	return nil, resp, ret
 }
 
 func (_self *RefreshWatcher) addHeader(req *http.Request) {
@@ -99,16 +111,19 @@ func (_self *RefreshWatcher) addHeader(req *http.Request) {
 func (_self *RefreshWatcher) doOnChangedProperties(registry *Registry, meta *ReleaseMeta) {
 	// Fetching release sources.
 	fetchUrl := _self.serverUri + "/source"
-	err, data := _self.doExchange(fetchUrl, "", "GET", 4000)
+	err, resp, data := _self.doExchange(fetchUrl, "", "GET", 4000)
 	if err != nil {
-		log.Printf("Failed to fetch property soruces. %p", err)
+		log.Printf("Failed to fetch property soruces. %s", err)
 		return
 	}
 
 	// Extract property sources.
-	releaseResp := ReleaseMessageResp{}
-	jsoniter.Unmarshal(data, releaseResp)
-	releaseMessage := releaseResp.data["release-source"]
+	msgResp := ReleaseMessageResp{}
+	err = jsoniter.Unmarshal(data, resp)
+	if err != nil {
+		log.Printf("Failed to extract property soruces. %s", err)
+	}
+	releaseMessage := msgResp.data["release-source"]
 
 	// Callback listeners.
 	for _, listener := range registry.Listeners() {
