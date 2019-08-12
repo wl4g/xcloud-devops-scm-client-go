@@ -23,16 +23,26 @@ import (
 func main() {
 	log.Printf("SCM example starting...")
 
-	refresher, err := scm.NewRefresher("http://localhost:8080/scm-server", 1000)
+	// Option.
+	opt := scm.RefreshOption{
+		ServerUri:  "http://localhost:14043/scm-server",
+		Netcard:    "", // Use local host-name.
+		TimeoutMs:  1000,
+		Group:      "ExampleCollector",
+		Namespaces: []string{"scm-agent.yml"},
+	}
+
+	// Create refresher.
+	refresher, err := scm.NewRefresher(opt)
 	if err != nil {
 		log.Panicf("Failed to create refresher. %s", err)
 	}
 
-	// Register config listener.
+	// Register listener.
 	_ = refresher.Registry().Register("exampleListener", func(meta *scm.ReleaseMeta, release scm.ReleaseMessage) {
 		log.Printf("On change config ... for meta: %s => %s", meta.AsJsonString(), release.AsJsonString())
 	})
 
-	// Startup startup.
+	// Startup & watching.
 	refresher.Watcher().Startup().Sync()
 }

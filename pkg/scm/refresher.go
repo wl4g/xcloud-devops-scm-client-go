@@ -26,10 +26,34 @@ import (
 
 type ConfigListener func(meta *ReleaseMeta, release ReleaseMessage)
 
+type RefreshOption struct {
+	ServerUri  string
+	Netcard    string
+	TimeoutMs  int64
+	Group      string
+	Namespaces []string
+}
+
 type DefaultRefresher struct {
-	serverUri string
-	registry  *Registry
-	watcher   *DefaultWatcher
+	RefreshOption
+	registry *Registry
+	watcher  *DefaultWatcher
+}
+
+func NewRefresher(opt RefreshOption) (*DefaultRefresher, error) {
+	// New registry.
+	registry := newRegistry()
+
+	// Create refresher.
+	refresher := DefaultRefresher{registry: registry}
+	refresher.RefreshOption = opt
+
+	// Create watcher.
+	watcher := &DefaultWatcher{refresher: refresher, registry: registry}
+	refresher.watcher = watcher
+
+	// RefreshOption.
+	return &refresher, nil
 }
 
 func (_self *DefaultRefresher) Registry() *Registry {
@@ -38,21 +62,6 @@ func (_self *DefaultRefresher) Registry() *Registry {
 
 func (_self *DefaultRefresher) Watcher() *DefaultWatcher {
 	return _self.watcher
-}
-
-func NewRefresher(serverUri string, timeoutMs int64) (*DefaultRefresher, error) {
-	// New registry.
-	registry := newRegistry()
-
-	// Create refresher.
-	refresher := DefaultRefresher{serverUri: serverUri, registry: registry}
-
-	// Create watcher.
-	watcher := &DefaultWatcher{refresher: refresher, timeoutMs: timeoutMs, registry: registry}
-	refresher.watcher = watcher
-
-	// DefaultRefresher.
-	return &refresher, nil
 }
 
 func (_self *DefaultRefresher) doExchange(url string, params string, method string, timeoutMs int64) (error, *http.Response, []byte) {
@@ -88,9 +97,18 @@ func (_self *DefaultRefresher) addHeader(req *http.Request) {
 }
 
 func (_self *DefaultRefresher) refresh(registry *Registry, meta *ReleaseMeta) {
+	// Get fetching url.
+	fetchUrl := _self.ServerUri + UriEndpointRefreshFetch
+
+	// Wrap get release parameters.
+	releaseI := GetReleaseInstance(_self.Netcard)
+	get := GetRelease{Instance: *releaseI}
+	get.Meta = *meta
+	get.Group = _self.Group
+	get.Namespaces = _self.Namespaces
+
 	// Fetching release sources.
-	fetchUrl := _self.serverUri + "/source"
-	err, resp, data := _self.doExchange(fetchUrl, "", "GET", 4000)
+	err, resp, data := _self.doExchange(fetchUrl, get.AsJsonString(), "GET", 4000)
 	if err != nil {
 		log.Printf("Failed to fetch property soruces. %s", err)
 		return

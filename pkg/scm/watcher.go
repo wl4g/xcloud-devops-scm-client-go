@@ -23,7 +23,6 @@ import (
 
 type DefaultWatcher struct {
 	refresher DefaultRefresher
-	timeoutMs int64
 	registry  *Registry
 }
 
@@ -48,8 +47,13 @@ func (_self *DefaultWatcher) Startup() *DefaultWatcher {
 }
 
 func (_self *DefaultWatcher) createWatchLongPolling() (error, *ReleaseMeta) {
-	watchUrl := _self.refresher.serverUri + "/watch"
-	err, resp, data := _self.refresher.doExchange(watchUrl, "", "GET", _self.timeoutMs)
+	// Get release instance.
+	releaseInstance := GetReleaseInstance(_self.refresher.Netcard)
+	// Get watching url.
+	watchUrl := _self.refresher.ServerUri + UriEndpointWatch + "?host=" + releaseInstance.Host + "&port" + string(releaseInstance.Port)
+
+	// Watching.
+	err, resp, data := _self.refresher.doExchange(watchUrl, "", "GET", _self.refresher.TimeoutMs)
 	if err != nil {
 		return err, nil
 	}
