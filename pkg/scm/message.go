@@ -15,6 +15,12 @@
  */
 package scm
 
+import "github.com/wl4g/super-devops-scm-agent/pkg/common"
+
+//
+// --- SCM message ---
+//
+
 type ReleaseInstance struct {
 	Host string `json:"host"`
 	Port string `json:"port"`
@@ -38,10 +44,27 @@ type GetRelease struct {
 
 type ReleaseMessage struct {
 	GetRelease
-	propertySources []ReleasePropertySource `json:"propertySources"`
+	PropertySources []ReleasePropertySource `json:"propertySources"`
 }
 
 type ReleasePropertySource struct {
 	name   string                 `json:"name"`
 	source map[string]interface{} `json:"source"`
+}
+
+func (msg *GenericInfo) AsJsonString() string {
+	return common.ToJSONString(msg)
+}
+
+func (msg *ReleaseMeta) AsJsonString() string {
+	return common.ToJSONString(msg)
+}
+
+//
+// --- Response ---
+//
+
+type ReleaseMessageResp struct {
+	RespBase
+	data map[string]ReleaseMessage `json:"data"`
 }

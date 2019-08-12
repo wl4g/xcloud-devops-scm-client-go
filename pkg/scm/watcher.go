@@ -105,7 +105,13 @@ func (_self *RefreshWatcher) doOnChangedProperties(registry *Registry, meta *Rel
 		return
 	}
 
+	// Extract property sources.
+	releaseResp := ReleaseMessageResp{}
+	jsoniter.Unmarshal(data, releaseResp)
+	releaseMessage := releaseResp.data["release-source"]
+
+	// Callback listeners.
 	for _, listener := range registry.Listeners() {
-		listener(meta, data)
+		listener(meta, releaseMessage)
 	}
 }

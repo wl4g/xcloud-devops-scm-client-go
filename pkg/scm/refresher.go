@@ -15,7 +15,7 @@
  */
 package scm
 
-type ConfigListener func(meta *ReleaseMeta, data []byte)
+type ConfigListener func(meta *ReleaseMeta, release ReleaseMessage)
 
 type Refresher struct {
 	registry *Registry
