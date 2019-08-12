@@ -25,12 +25,13 @@ func main() {
 
 	// Option.
 	opt := scm.RefreshOption{
-		ServerUri:  "http://localhost:14043/scm-server",
-		TimeoutMs:  1000,
-		Netcard:    "", // Use local host-name.
-		Group:      "ExampleCollector",
-		Port:       -1,
-		Namespaces: "scm-agent.yml",
+		Server:    "http://localhost:14043/scm-server",
+		TimeoutMs: 1000,
+		Netcard:   "", // Use local host-name.
+		Cluster:   "ExampleCollector",
+		//Port:       -1,
+		InstanceAddr: "MyCollectorAddr",
+		Namespaces:   "scm-agent.yml",
 	}
 
 	// Create refresher.

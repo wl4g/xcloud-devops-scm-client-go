@@ -77,10 +77,10 @@ func (_self *DefaultWatcher) getWatchUrl() string {
 	// Release instance.
 	releaseI := GetReleaseInstance(_self.refresher.RefreshOption)
 	// Watching url.
-	watchUrl := _self.refresher.ServerUri + UriEndpointWatch +
+	watchUrl := _self.refresher.Server + UriEndpointWatch +
 		"?instance.host=" + releaseI.Host +
 		"&instance.port=" + strconv.Itoa(releaseI.Port) +
-		"&group=" + _self.refresher.Group +
+		"&group=" + _self.refresher.Cluster +
 		"&namespaces=" + _self.refresher.Namespaces
 	return watchUrl
 }

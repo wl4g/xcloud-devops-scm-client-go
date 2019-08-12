@@ -18,21 +18,25 @@ package scm
 import (
 	"bytes"
 	jsoniter "github.com/json-iterator/go"
+	"github.com/wl4g/super-devops-scm-agent/pkg/common"
+	"github.com/wl4g/super-devops-scm-agent/pkg/errors"
 	"io/ioutil"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 )
 
 type ConfigListener func(meta *ReleaseMeta, release ReleaseMessage)
 
 type RefreshOption struct {
-	ServerUri  string
-	TimeoutMs  int64
-	Netcard    string
-	Group      string
-	Port       int
-	Namespaces string
+	Server       string
+	TimeoutMs    int64
+	Netcard      string
+	Cluster      string
+	Port         int
+	InstanceAddr string
+	Namespaces   string
 }
 
 type DefaultRefresher struct {
@@ -42,6 +46,9 @@ type DefaultRefresher struct {
 }
 
 func NewRefresher(opt RefreshOption) (*DefaultRefresher, error) {
+	// Check options.
+	checkOptions(&opt)
+
 	// New registry.
 	registry := newRegistry()
 
@@ -102,11 +109,11 @@ func (_self *DefaultRefresher) refresh(registry *Registry, meta *ReleaseMeta) {
 	releaseI := GetReleaseInstance(_self.RefreshOption)
 	get := GetRelease{Instance: *releaseI}
 	get.Meta = *meta
-	get.Group = _self.Group
-	get.Namespaces = _self.Namespaces
+	get.Group = _self.Cluster
+	get.Namespaces = strings.Split(_self.Namespaces, ",")
 
 	// Fetching release sources.
-	fetchUrl := _self.ServerUri + UriEndpointRefreshFetch
+	fetchUrl := _self.Server + UriEndpointRefreshFetch
 	err, resp, data := _self.doExchange(fetchUrl, get.AsJsonString(), "GET", 4000)
 	if err != nil {
 		log.Printf("Failed to fetch property soruces. %s", err)
@@ -125,4 +132,38 @@ func (_self *DefaultRefresher) refresh(registry *Registry, meta *ReleaseMeta) {
 	for _, listener := range registry.Listeners() {
 		listener(meta, releaseMsg)
 	}
+}
+
+/**
+ * Check and use default refresh options.
+ */
+func (_self *RefreshOption) checkAndUseDefault() {
+	if common.IsEmpty(_self.Server) {
+		errors.FatalExit("Illegal scm server! %s", _self.Server)
+	}
+	if _self.TimeoutMs == 0 {
+		_self.TimeoutMs = 30 * 1000
+	}
+	if common.IsEmpty(_self.Netcard) {
+		log.Printf("Use default netcard")
+	}
+	if common.IsEmpty(_self.Cluster) {
+		errors.FatalExit("SCM cluster must not be empty!")
+	}
+	if _self.Port == 0 {
+		log.Printf("Not enable port!")
+	}
+	if common.IsEmpty(_self.Namespaces) {
+		errors.FatalExit("SCM namespaces must not be empty!")
+	}
+}
+
+/**
+ * Check refresh options.
+ */
+func checkOptions(opt *RefreshOption) {
+	if opt == nil {
+		log.Panicf("Illegal refresh option! %s", common.ToJSONString(opt))
+	}
+	opt.checkAndUseDefault()
 }
