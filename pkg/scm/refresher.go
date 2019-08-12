@@ -99,9 +99,8 @@ func (_self *DefaultRefresher) addHeader(req *http.Request) {
 
 func (_self *DefaultRefresher) refresh(registry *Registry, meta *ReleaseMeta) {
 	// Get release parameters.
-	releaseI := ReleaseInstance{Host: GetHostAddr(_self.Netcard), Port: -1}
-
-	get := GetRelease{Instance: releaseI}
+	releaseI := GetReleaseInstance(_self.RefreshOption)
+	get := GetRelease{Instance: *releaseI}
 	get.Meta = *meta
 	get.Group = _self.Group
 	get.Namespaces = _self.Namespaces

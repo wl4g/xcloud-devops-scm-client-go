@@ -25,28 +25,29 @@ import (
 )
 
 var (
-	regex     = regexp.MustCompile(`(2(5[0-5]{1}|[0-4]\d{1})|[0-1]?\d{1,2})(\.(2(5[0-5]{1}|[0-4]\d{1})|[0-1]?\d{1,2})){3}`)
-	hostCache = ""
+	regex         = regexp.MustCompile(`(2(5[0-5]{1}|[0-4]\d{1})|[0-1]?\d{1,2})(\.(2(5[0-5]{1}|[0-4]\d{1})|[0-1]?\d{1,2})){3}`)
+	releaseICache *ReleaseInstance
 )
 
 /**
  * Get hardware information and process unique identification.
  */
-func GetHostAddr(netcard string) string {
+func GetReleaseInstance(opt RefreshOption) *ReleaseInstance {
 	// Get by cache.
-	if hostCache != "" {
-		return hostCache
+	if releaseICache != nil {
+		return releaseICache
 	}
 
-	// Default local host-name.
-	host, err := os.Hostname()
+	// Default local hostAddr-name.
+	hostAddr, err := os.Hostname()
 	if err != nil {
-		log.Panicf("Failed to Get local host. %s", err)
+		log.Panicf("Failed to Get local hostAddr. %s", err)
 	}
 
 	/*
 	 * Use the specified network card name to correspond to IP.
 	 */
+	netcard := opt.Netcard
 	if common.IsEmpty(netcard) { // Compatible system environment variables.
 		netcard = os.Getenv(KeyOSNetcard)
 	}
@@ -58,16 +59,16 @@ func GetHostAddr(netcard string) string {
 				//fmt.Printf("Found network interfaces for - '%s'", ni.HardwareAddr)
 				address, err := ni.Addrs()
 				if err != nil {
-					log.Panicf("Failed to Get host by addrs: %s, %s", address, err)
+					log.Panicf("Failed to Get hostAddr by addrs: %s, %s", address, err)
 				}
 				for _, addr := range address {
 					_addr := addr.String()
 					if len(regex.FindAllString(_addr, -1)) > 0 {
 						a := strings.Split(_addr, "/")
 						if len(a) >= 2 {
-							host = a[0]
+							hostAddr = a[0]
 						} else {
-							host = _addr
+							hostAddr = _addr
 						}
 						break ok
 					}
@@ -75,13 +76,13 @@ func GetHostAddr(netcard string) string {
 			}
 		}
 	}
-	hostCache := host
-	return hostCache
+	releaseICache := ReleaseInstance{Host: hostAddr, Port: opt.Port}
+	return &releaseICache
 }
 
 /**
  * Clear instance cache.
  */
 func ClearCache() {
-	hostCache = ""
+	releaseICache = nil
 }

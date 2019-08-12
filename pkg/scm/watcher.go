@@ -47,20 +47,15 @@ func (_self *DefaultWatcher) Startup() *DefaultWatcher {
 }
 
 func (_self *DefaultWatcher) createWatchLongPolling() (error, *ReleaseMeta) {
-	// Release instance.
-	releaseI := ReleaseInstance{Host: GetHostAddr(_self.refresher.Netcard), Port: -1}
-	// Watching url.
-	watchUrl := _self.refresher.ServerUri + UriEndpointWatch + "?host=" + releaseI.Host + "&port=" + string(releaseI.Port)
-
 	// Do watching.
-	err, resp, data := _self.refresher.doExchange(watchUrl, "", "GET", _self.refresher.TimeoutMs)
+	err, resp, data := _self.refresher.doExchange(_self.getWatchUrl(), "", "GET", _self.refresher.TimeoutMs)
 	if err != nil {
 		return err, nil
 	}
 
 	// Update watching state
 	switch resp.StatusCode {
-	case 200: // On change
+	case 200: // Changed
 		meta := ReleaseMeta{}
 		err = jsoniter.Unmarshal(data, meta)
 		if err != nil {
@@ -75,4 +70,12 @@ func (_self *DefaultWatcher) createWatchLongPolling() (error, *ReleaseMeta) {
 		return &IllegalWatchExceptionError{StatusCode: resp.StatusCode}, nil
 	}
 	return nil, nil
+}
+
+func (_self *DefaultWatcher) getWatchUrl() string {
+	// Release instance.
+	releaseI := GetReleaseInstance(_self.refresher.RefreshOption)
+	// Watching url.
+	watchUrl := _self.refresher.ServerUri + UriEndpointWatch + "?host=" + releaseI.Host + "&port=" + string("1")
+	return watchUrl
 }
