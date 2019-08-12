@@ -17,46 +17,62 @@ package scm
 
 import (
 	"bytes"
+	jsoniter "github.com/json-iterator/go"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"time"
 )
 
-type Watcher interface {
-	watch()
-}
-
-type RefresherWatcher struct {
-	watchUri  string
+type RefreshWatcher struct {
+	serverUri string
 	timeoutMs int64
 	registry  *Registry
 }
 
-func (w *RefresherWatcher) Startup() {
-	// Loop watching.
-	for true {
-		err, data := w.doWatchLongPolling()
-		if err != nil {
-			log.Printf("Failed to watch response. %p", err)
-		} else if data != nil {
-			doOnChangePropertiesSet(w.registry, data)
-		}
-		time.Sleep(1 * time.Second)
-	}
+func (_self *RefreshWatcher) Sync() {
+	select {}
 }
 
-func (w *RefresherWatcher) doWatchLongPolling() (error, []byte) {
-	req, err := http.NewRequest("GET", w.watchUri, bytes.NewReader([]byte("")))
+func (_self *RefreshWatcher) Startup() *RefreshWatcher {
+	// Loop watching.
+	go func() {
+		for true {
+			err, meta := _self.createWatchLongPolling()
+			if err != nil {
+				log.Printf("Failed to watching. %s", err.Error())
+			} else if meta != nil {
+				_self.doOnChangedProperties(_self.registry, meta)
+			}
+			time.Sleep(1 * time.Second)
+		}
+	}()
+	return _self
+}
+
+func (_self *RefreshWatcher) createWatchLongPolling() (error, *ReleaseMeta) {
+	watchUrl := _self.serverUri + "/watch"
+	err, data := _self.doExchange(watchUrl, "", "GET", _self.timeoutMs)
 	if err != nil {
 		return err, nil
 	}
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json, text/plain, */*")
-	req.Header.Set("Connection", "keep-alive")
+	meta := ReleaseMeta{}
+	err = jsoniter.Unmarshal(data, meta)
+	if err != nil {
+		return err, nil
+	}
+	return nil, &meta
+}
+
+func (_self *RefreshWatcher) doExchange(url string, params string, method string, timeoutMs int64) (error, []byte) {
+	req, err := http.NewRequest(method, url, bytes.NewReader([]byte(params)))
+	if err != nil {
+		return err, nil
+	}
+	_self.addHeader(req)
 
 	// Do req.
-	httpClient := &http.Client{Timeout: time.Duration(w.timeoutMs * 1000)}
+	httpClient := &http.Client{Timeout: time.Duration(timeoutMs * 1000)}
 	resp, err := httpClient.Do(req)
 	if resp != nil {
 		defer resp.Body.Close()
@@ -74,8 +90,22 @@ func (w *RefresherWatcher) doWatchLongPolling() (error, []byte) {
 	return nil, ret
 }
 
-func doOnChangePropertiesSet(registry *Registry, data []byte) {
+func (_self *RefreshWatcher) addHeader(req *http.Request) {
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json, text/plain, */*")
+	req.Header.Set("Connection", "keep-alive")
+}
+
+func (_self *RefreshWatcher) doOnChangedProperties(registry *Registry, meta *ReleaseMeta) {
+	// Fetching release sources.
+	fetchUrl := _self.serverUri + "/source"
+	err, data := _self.doExchange(fetchUrl, "", "GET", 4000)
+	if err != nil {
+		log.Printf("Failed to fetch property soruces. %p", err)
+		return
+	}
+
 	for _, listener := range registry.Listeners() {
-		listener(data)
+		listener(meta, data)
 	}
 }

@@ -30,10 +30,10 @@ func main() {
 	}
 
 	// Register config listener.
-	_ = refresher.Registry().Register("exampleListener", func(meta scm.ReleaseMeta, data []byte) {
+	_ = refresher.Registry().Register("exampleListener", func(meta *scm.ReleaseMeta, data []byte) {
 		log.Printf("On change config ... for meta: %s => %s", common.ToJSONString(meta), string(data))
 	})
 
 	// Startup startup.
-	refresher.Watcher().Startup()
+	refresher.Watcher().Startup().Sync()
 }

@@ -15,31 +15,33 @@
  */
 package scm
 
-type ConfigListener func(meta *ReleaseMeta, data []byte)
-
-type Refresher struct {
-	registry *Registry
-	watcher  *RefreshWatcher
+type ReleaseInstance struct {
+	Host string `json:"host"`
+	Port string `json:"port"`
 }
 
-func (r *Refresher) Registry() *Registry {
-	return r.registry
+type ReleaseMeta struct {
+	Version   string `json:"version"`
+	ReleaseId string `json:"releaseId"`
 }
 
-func (r *Refresher) Watcher() *RefreshWatcher {
-	return r.watcher
+type GenericInfo struct {
+	Group      string      `json:"group"`
+	Namespaces []string    `json:"namespaces"`
+	Meta       ReleaseMeta `json:"meta"`
 }
 
-func NewRefresher(watchUri string, timeoutMs int64) (*Refresher, error) {
-	// New registry.
-	registry := newRegistry()
+type GetRelease struct {
+	Instance ReleaseInstance `json:"instance"`
+	GenericInfo
+}
 
-	// Create watch.
-	watcher := &RefreshWatcher{serverUri: watchUri, timeoutMs: timeoutMs, registry: registry}
+type ReleaseMessage struct {
+	GetRelease
+	propertySources []ReleasePropertySource `json:"propertySources"`
+}
 
-	// Refresher.
-	return &Refresher{
-		registry: registry,
-		watcher:  watcher,
-	}, nil
+type ReleasePropertySource struct {
+	name   string                 `json:"name"`
+	source map[string]interface{} `json:"source"`
 }

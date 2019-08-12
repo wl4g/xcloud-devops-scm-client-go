@@ -15,31 +15,9 @@
  */
 package scm
 
-type ConfigListener func(meta *ReleaseMeta, data []byte)
-
-type Refresher struct {
-	registry *Registry
-	watcher  *RefreshWatcher
-}
-
-func (r *Refresher) Registry() *Registry {
-	return r.registry
-}
-
-func (r *Refresher) Watcher() *RefreshWatcher {
-	return r.watcher
-}
-
-func NewRefresher(watchUri string, timeoutMs int64) (*Refresher, error) {
-	// New registry.
-	registry := newRegistry()
-
-	// Create watch.
-	watcher := &RefreshWatcher{serverUri: watchUri, timeoutMs: timeoutMs, registry: registry}
-
-	// Refresher.
-	return &Refresher{
-		registry: registry,
-		watcher:  watcher,
-	}, nil
+type RespBase struct {
+	code    int32                  `json:"code"`
+	status  string                 `json:"status"`
+	message string                 `json:"message"`
+	data    map[string]interface{} `json:"data"`
 }
