@@ -15,9 +15,9 @@
  */
 package scm
 
-type ConfigListener func(data []byte)
+type ConfigListener func(meta ReleaseMeta, data []byte)
 
-type releaseMeta struct {
+type ReleaseMeta struct {
 	version   string `json:"version"`
 	releaseId string `json:"releaseId"`
 }

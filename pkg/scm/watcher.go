@@ -33,7 +33,7 @@ type RefresherWatcher struct {
 	registry  *Registry
 }
 
-func (w *RefresherWatcher) Watch() {
+func (w *RefresherWatcher) Startup() {
 	// Loop watching.
 	for true {
 		err, data := w.doWatchLongPolling()
