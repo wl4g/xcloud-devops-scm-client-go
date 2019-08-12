@@ -16,66 +16,71 @@
 package scm
 
 import (
-	"bytes"
-	"io/ioutil"
+	jsoniter "github.com/json-iterator/go"
 	"log"
-	"net/http"
+	"strconv"
 	"time"
 )
 
-type Watcher interface {
-	watch()
-}
-
-type RefresherWatcher struct {
-	watchUri  string
-	timeoutMs int64
+type DefaultWatcher struct {
+	refresher DefaultRefresher
 	registry  *Registry
 }
 
-func (w *RefresherWatcher) Watch() {
+func (_self *DefaultWatcher) Sync() {
+	select {}
+}
+
+func (_self *DefaultWatcher) Startup() *DefaultWatcher {
 	// Loop watching.
-	for true {
-		err, data := w.doWatchLongPolling()
-		if err != nil {
-			log.Printf("Failed to watch response. %p", err)
-		} else if data != nil {
-			doOnChangePropertiesSet(w.registry, data)
+	go func() {
+		for true {
+			err, meta := _self.createWatchLongPolling()
+			if err != nil {
+				log.Printf("Failed to watching. %s", err.Error())
+			} else if meta != nil {
+				_self.refresher.refresh(_self.registry, meta)
+			}
+			time.Sleep(1 * time.Second)
 		}
-		time.Sleep(1 * time.Second)
-	}
+	}()
+	return _self
 }
 
-func (w *RefresherWatcher) doWatchLongPolling() (error, []byte) {
-	req, err := http.NewRequest("GET", w.watchUri, bytes.NewReader([]byte("")))
+func (_self *DefaultWatcher) createWatchLongPolling() (error, *ReleaseMeta) {
+	// Do watching.
+	err, resp, data := _self.refresher.doExchange(_self.getWatchUrl(), "", "GET", _self.refresher.TimeoutMs)
 	if err != nil {
 		return err, nil
 	}
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json, text/plain, */*")
-	req.Header.Set("Connection", "keep-alive")
 
-	// Do req.
-	httpClient := &http.Client{Timeout: time.Duration(w.timeoutMs * 1000)}
-	resp, err := httpClient.Do(req)
-	if resp != nil {
-		defer resp.Body.Close()
+	// Update watching state
+	switch resp.StatusCode {
+	case 200: // Changed
+		meta := ReleaseMeta{}
+		err = jsoniter.Unmarshal(data, meta)
+		if err != nil {
+			return err, nil
+		}
+		return nil, &meta
+	case 103:
+		// Not implemented
+	case 304:
+		break // Not modified(next long-polling)
+	default:
+		return &IllegalWatchExceptionError{StatusCode: resp.StatusCode}, nil
 	}
-	if err != nil {
-		//log.Printf("Failed to req.")
-		return err, nil
-	}
-	ret, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		//log.Printf("Failed to get response body, %p", err)
-		return err, nil
-	}
-	//log.Printf("Receive response message, %s", string(ret))
-	return nil, ret
+	return nil, nil
 }
 
-func doOnChangePropertiesSet(registry *Registry, data []byte) {
-	for _, listener := range registry.Listeners() {
-		listener(data)
-	}
+func (_self *DefaultWatcher) getWatchUrl() string {
+	// Release instance.
+	releaseI := GetReleaseInstance(_self.refresher.RefreshOption)
+	// Watching url.
+	watchUrl := _self.refresher.ServerUri + UriEndpointWatch +
+		"?instance.host=" + releaseI.Host +
+		"&instance.port=" + strconv.Itoa(releaseI.Port) +
+		"&group=" + _self.refresher.Group +
+		"&namespaces=" + _self.refresher.Namespaces
+	return watchUrl
 }

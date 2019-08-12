@@ -15,36 +15,114 @@
  */
 package scm
 
-type ConfigListener func(data []byte)
+import (
+	"bytes"
+	jsoniter "github.com/json-iterator/go"
+	"io/ioutil"
+	"log"
+	"net/http"
+	"time"
+)
 
-type releaseMeta struct {
-	version   string `json:"version"`
-	releaseId string `json:"releaseId"`
+type ConfigListener func(meta *ReleaseMeta, release ReleaseMessage)
+
+type RefreshOption struct {
+	ServerUri  string
+	TimeoutMs  int64
+	Netcard    string
+	Group      string
+	Port       int
+	Namespaces string
 }
 
-type Refresher struct {
+type DefaultRefresher struct {
+	RefreshOption
 	registry *Registry
-	watcher  *RefresherWatcher
+	watcher  *DefaultWatcher
 }
 
-func (r *Refresher) Registry() *Registry {
-	return r.registry
-}
-
-func (r *Refresher) Watcher() *RefresherWatcher {
-	return r.watcher
-}
-
-func NewRefresher(watchUri string, timeoutMs int64) (*Refresher, error) {
+func NewRefresher(opt RefreshOption) (*DefaultRefresher, error) {
 	// New registry.
 	registry := newRegistry()
 
-	// Create watch.
-	watcher := &RefresherWatcher{watchUri: watchUri, timeoutMs: timeoutMs, registry: registry}
+	// Create refresher.
+	refresher := DefaultRefresher{registry: registry}
+	refresher.RefreshOption = opt
 
-	// Refresher.
-	return &Refresher{
-		registry: registry,
-		watcher:  watcher,
-	}, nil
+	// Create watcher.
+	watcher := &DefaultWatcher{refresher: refresher, registry: registry}
+	refresher.watcher = watcher
+
+	// RefreshOption.
+	return &refresher, nil
+}
+
+func (_self *DefaultRefresher) Registry() *Registry {
+	return _self.registry
+}
+
+func (_self *DefaultRefresher) Watcher() *DefaultWatcher {
+	return _self.watcher
+}
+
+func (_self *DefaultRefresher) doExchange(url string, params string, method string, timeoutMs int64) (error, *http.Response, []byte) {
+	req, err := http.NewRequest(method, url, bytes.NewReader([]byte(params)))
+	if err != nil {
+		return err, nil, nil
+	}
+	_self.addHeader(req)
+
+	// Do req.
+	httpClient := &http.Client{Timeout: time.Duration(timeoutMs * 1000)}
+	resp, err := httpClient.Do(req)
+	if resp != nil {
+		defer resp.Body.Close()
+	}
+	if err != nil {
+		//log.Printf("Failed to req.")
+		return err, resp, nil
+	}
+	ret, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		//log.Printf("Failed to get response body, %p", err)
+		return err, resp, nil
+	}
+	//log.Printf("Receive response message, %s", string(ret))
+	return nil, resp, ret
+}
+
+func (_self *DefaultRefresher) addHeader(req *http.Request) {
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json, text/plain, */*")
+	req.Header.Set("Connection", "keep-alive")
+}
+
+func (_self *DefaultRefresher) refresh(registry *Registry, meta *ReleaseMeta) {
+	// Get release parameters.
+	releaseI := GetReleaseInstance(_self.RefreshOption)
+	get := GetRelease{Instance: *releaseI}
+	get.Meta = *meta
+	get.Group = _self.Group
+	get.Namespaces = _self.Namespaces
+
+	// Fetching release sources.
+	fetchUrl := _self.ServerUri + UriEndpointRefreshFetch
+	err, resp, data := _self.doExchange(fetchUrl, get.AsJsonString(), "GET", 4000)
+	if err != nil {
+		log.Printf("Failed to fetch property soruces. %s", err)
+		return
+	}
+
+	// Extract property sources.
+	msgResp := ReleaseMessageResp{}
+	err = jsoniter.Unmarshal(data, resp)
+	if err != nil {
+		log.Printf("Failed to extract property soruces. %s", err)
+	}
+	releaseMsg := msgResp.data["release-source"]
+
+	// Callback listeners.
+	for _, listener := range registry.Listeners() {
+		listener(meta, releaseMsg)
+	}
 }
