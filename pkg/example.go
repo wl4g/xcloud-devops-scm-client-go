@@ -30,7 +30,7 @@ func main() {
 		Netcard:    "", // Use local host-name.
 		Group:      "ExampleCollector",
 		Port:       -1,
-		Namespaces: []string{"scm-agent.yml"},
+		Namespaces: "scm-agent.yml",
 	}
 
 	// Create refresher.

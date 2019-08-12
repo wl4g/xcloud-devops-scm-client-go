@@ -32,7 +32,7 @@ type RefreshOption struct {
 	Netcard    string
 	Group      string
 	Port       int
-	Namespaces []string
+	Namespaces string
 }
 
 type DefaultRefresher struct {
@@ -119,10 +119,10 @@ func (_self *DefaultRefresher) refresh(registry *Registry, meta *ReleaseMeta) {
 	if err != nil {
 		log.Printf("Failed to extract property soruces. %s", err)
 	}
-	releaseMessage := msgResp.data["release-source"]
+	releaseMsg := msgResp.data["release-source"]
 
 	// Callback listeners.
 	for _, listener := range registry.Listeners() {
-		listener(meta, releaseMessage)
+		listener(meta, releaseMsg)
 	}
 }

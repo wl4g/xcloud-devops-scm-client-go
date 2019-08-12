@@ -18,6 +18,7 @@ package scm
 import (
 	jsoniter "github.com/json-iterator/go"
 	"log"
+	"strconv"
 	"time"
 )
 
@@ -76,6 +77,10 @@ func (_self *DefaultWatcher) getWatchUrl() string {
 	// Release instance.
 	releaseI := GetReleaseInstance(_self.refresher.RefreshOption)
 	// Watching url.
-	watchUrl := _self.refresher.ServerUri + UriEndpointWatch + "?host=" + releaseI.Host + "&port=" + string("1")
+	watchUrl := _self.refresher.ServerUri + UriEndpointWatch +
+		"?instance.host=" + releaseI.Host +
+		"&instance.port=" + strconv.Itoa(releaseI.Port) +
+		"&group=" + _self.refresher.Group +
+		"&namespaces=" + _self.refresher.Namespaces
 	return watchUrl
 }
