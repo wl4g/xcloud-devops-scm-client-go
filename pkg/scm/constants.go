@@ -15,8 +15,18 @@
  */
 package scm
 
+import (
+	"github.com/wl4g/super-devops-scm-agent/pkg/common"
+)
+
 const (
-	KeyOSNetcard            = "devops.scm.netcard"
+	KeyEnvNetcard           = "devops.scm.netcard"
+	KeyReleaseSource        = "release-source"
 	UriEndpointWatch        = "/endpoint/watch"
 	UriEndpointRefreshFetch = "/endpoint/source"
+)
+
+var (
+	DefaultWatchTimeout, _ = common.GetEnvInt64("devops.scm.watch.timeout", 30*1000)
+	DefaultFetchTimeout, _ = common.GetEnvInt64("devops.scm.fetch.timeout", 5*1000)
 )

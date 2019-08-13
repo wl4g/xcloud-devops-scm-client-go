@@ -31,7 +31,6 @@ type ConfigListener func(meta *ReleaseMeta, release ReleaseMessage)
 
 type RefreshOption struct {
 	Server       string
-	TimeoutMs    int64
 	Netcard      string
 	Cluster      string
 	Port         int
@@ -114,7 +113,7 @@ func (_self *DefaultRefresher) refresh(registry *Registry, meta *ReleaseMeta) {
 
 	// Fetching release sources.
 	fetchUrl := _self.Server + UriEndpointRefreshFetch
-	err, resp, data := _self.doExchange(fetchUrl, get.AsJsonString(), "GET", 4000)
+	err, resp, data := _self.doExchange(fetchUrl, get.AsJsonString(), "GET", DefaultFetchTimeout)
 	if err != nil {
 		log.Printf("Failed to fetch property soruces. %s", err)
 		return
@@ -126,7 +125,7 @@ func (_self *DefaultRefresher) refresh(registry *Registry, meta *ReleaseMeta) {
 	if err != nil {
 		log.Printf("Failed to extract property soruces. %s", err)
 	}
-	releaseMsg := msgResp.data["release-source"]
+	releaseMsg := msgResp.data[KeyReleaseSource]
 
 	// Callback listeners.
 	for _, listener := range registry.Listeners() {
@@ -140,9 +139,6 @@ func (_self *DefaultRefresher) refresh(registry *Registry, meta *ReleaseMeta) {
 func (_self *RefreshOption) checkAndUseDefault() {
 	if common.IsEmpty(_self.Server) {
 		errors.FatalExit("Illegal scm server! %s", _self.Server)
-	}
-	if _self.TimeoutMs == 0 {
-		_self.TimeoutMs = 30 * 1000
 	}
 	if common.IsEmpty(_self.Netcard) {
 		log.Printf("Use default netcard")

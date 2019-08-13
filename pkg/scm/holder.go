@@ -49,7 +49,7 @@ func GetReleaseInstance(opt RefreshOption) *ReleaseInstance {
 	 */
 	netcard := opt.Netcard
 	if common.IsEmpty(netcard) { // Compatible system environment variables.
-		netcard = os.Getenv(KeyOSNetcard)
+		netcard = os.Getenv(KeyEnvNetcard)
 	}
 	if !common.IsEmpty(netcard) {
 		nis, _ := net.Interfaces()

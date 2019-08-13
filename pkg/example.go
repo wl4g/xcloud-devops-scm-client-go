@@ -23,14 +23,11 @@ import (
 func main() {
 	log.Printf("SCM example starting...")
 
-	// Option.
 	opt := scm.RefreshOption{
-		Server:    "http://localhost:14043/scm-server",
-		TimeoutMs: 1000,
-		Netcard:   "", // Use local host-name.
-		Cluster:   "ExampleCollector",
+		Server:  "http://localhost:14043/scm-server",
+		Cluster: "ExampleCollector",
 		//Port:       -1,
-		InstanceAddr: "MyCollectorAddr",
+		InstanceAddr: "ExampleCollector1",
 		Namespaces:   "scm-agent.yml",
 	}
 

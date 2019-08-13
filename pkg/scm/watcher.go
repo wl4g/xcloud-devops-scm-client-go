@@ -49,7 +49,7 @@ func (_self *DefaultWatcher) Startup() *DefaultWatcher {
 
 func (_self *DefaultWatcher) createWatchLongPolling() (error, *ReleaseMeta) {
 	// Do watching.
-	err, resp, data := _self.refresher.doExchange(_self.getWatchUrl(), "", "GET", _self.refresher.TimeoutMs)
+	err, resp, data := _self.refresher.doExchange(_self.getWatchUrl(), "", "GET", DefaultWatchTimeout)
 	if err != nil {
 		return err, nil
 	}
