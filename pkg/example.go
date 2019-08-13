@@ -24,9 +24,9 @@ func main() {
 	log.Printf("SCM example starting...")
 
 	opt := scm.RefreshOption{
-		Server:  "http://localhost:14043/scm-server",
-		Cluster: "ExampleCollector",
-		//Port:       -1,
+		Server:       "http://localhost:14043/scm-server",
+		Cluster:      "ExampleCollector",
+		Port:         1025,
 		InstanceAddr: "ExampleCollector1",
 		Namespaces:   "scm-agent.yml",
 	}

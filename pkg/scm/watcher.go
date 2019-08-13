@@ -39,6 +39,7 @@ func (_self *DefaultWatcher) Startup() *DefaultWatcher {
 			if err != nil {
 				log.Printf("Failed to watching. %s", err.Error())
 			} else if meta != nil {
+				log.Panicf("Refreshing config - %s", meta)
 				_self.refresher.refresh(_self.registry, meta)
 			}
 			time.Sleep(1 * time.Second)
@@ -64,7 +65,7 @@ func (_self *DefaultWatcher) createWatchLongPolling() (error, *ReleaseMeta) {
 		}
 		return nil, &meta
 	case 103:
-		// Not implemented
+		break // Not implemented
 	case 304:
 		break // Not modified(next long-polling)
 	default:

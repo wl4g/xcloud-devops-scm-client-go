@@ -79,7 +79,7 @@ func (_self *DefaultRefresher) doExchange(url string, params string, method stri
 	_self.addHeader(req)
 
 	// Do req.
-	httpClient := &http.Client{Timeout: time.Duration(timeoutMs * 1000)}
+	httpClient := &http.Client{Timeout: time.Duration(timeoutMs) * time.Millisecond}
 	resp, err := httpClient.Do(req)
 	if resp != nil {
 		defer resp.Body.Close()

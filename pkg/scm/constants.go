@@ -27,6 +27,6 @@ const (
 )
 
 var (
-	DefaultWatchTimeout, _ = common.GetEnvInt64("devops.scm.watch.timeout", 30*1000)
+	DefaultWatchTimeout, _ = common.GetEnvInt64("devops.scm.watch.timeout", 35*1000)
 	DefaultFetchTimeout, _ = common.GetEnvInt64("devops.scm.fetch.timeout", 5*1000)
 )
