@@ -18,7 +18,6 @@ package scm
 import (
 	jsoniter "github.com/json-iterator/go"
 	"log"
-	"strconv"
 	"time"
 )
 
@@ -34,6 +33,7 @@ func (_self *DefaultWatcher) Sync() {
 func (_self *DefaultWatcher) Startup() *DefaultWatcher {
 	// Loop watching.
 	go func() {
+		log.Printf(" SCM watcher is started.")
 		for true {
 			err, meta := _self.createWatchLongPolling()
 			if err != nil {
@@ -80,8 +80,8 @@ func (_self *DefaultWatcher) getWatchUrl() string {
 	// Watching url.
 	watchUrl := _self.refresher.Server + UriEndpointWatch +
 		"?instance.host=" + releaseI.Host +
-		"&instance.port=" + strconv.Itoa(releaseI.Port) +
-		"&group=" + _self.refresher.Cluster +
+		"&instance.endpoint=" + releaseI.Endpoint +
+		"&cluster=" + _self.refresher.Cluster +
 		"&namespaces=" + _self.refresher.Namespaces
 	return watchUrl
 }
