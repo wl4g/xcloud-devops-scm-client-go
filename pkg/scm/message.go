@@ -22,8 +22,8 @@ import "github.com/wl4g/super-devops-scm-agent/pkg/common"
 //
 
 type ReleaseInstance struct {
-	Host string `json:"host"`
-	Port int    `json:"port"`
+	Host     string `json:"host"`
+	Endpoint string `json:"endpoint"`
 }
 
 type ReleaseMeta struct {

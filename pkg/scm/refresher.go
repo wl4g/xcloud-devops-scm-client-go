@@ -30,12 +30,11 @@ import (
 type ConfigListener func(meta *ReleaseMeta, release ReleaseMessage)
 
 type RefreshOption struct {
-	Server       string
-	Netcard      string
-	Cluster      string
-	Port         int
-	InstanceAddr string
-	Namespaces   string
+	Server     string
+	Netcard    string
+	Cluster    string
+	Endpoint   string
+	Namespaces string
 }
 
 type DefaultRefresher struct {
@@ -138,16 +137,16 @@ func (_self *DefaultRefresher) refresh(registry *Registry, meta *ReleaseMeta) {
  */
 func (_self *RefreshOption) checkAndUseDefault() {
 	if common.IsEmpty(_self.Server) {
-		errors.FatalExit("Illegal scm server! %s", _self.Server)
+		errors.FatalExit("Illegal scm server address. %s", _self.Server)
 	}
 	if common.IsEmpty(_self.Netcard) {
-		log.Printf("Use default netcard")
+		log.Printf("Default local hostname is used.")
 	}
 	if common.IsEmpty(_self.Cluster) {
 		errors.FatalExit("SCM cluster must not be empty!")
 	}
-	if _self.Port == 0 {
-		log.Printf("Not enable port!")
+	if common.IsEmpty(_self.Endpoint) {
+		errors.FatalExit("SCM endpoint must not be empty!")
 	}
 	if common.IsEmpty(_self.Namespaces) {
 		errors.FatalExit("SCM namespaces must not be empty!")

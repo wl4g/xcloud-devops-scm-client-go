@@ -76,7 +76,7 @@ func GetReleaseInstance(opt RefreshOption) *ReleaseInstance {
 			}
 		}
 	}
-	releaseICache := ReleaseInstance{Host: hostAddr, Port: opt.Port}
+	releaseICache := ReleaseInstance{Host: hostAddr, Endpoint: opt.Endpoint}
 	return &releaseICache
 }
 
