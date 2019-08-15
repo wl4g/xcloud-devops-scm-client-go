@@ -107,7 +107,7 @@ func (_self *DefaultRefresher) refresh(registry *Registry, meta *ReleaseMeta) {
 	releaseI := GetReleaseInstance(_self.RefreshOption)
 	get := GetRelease{Instance: *releaseI}
 	get.Meta = *meta
-	get.Group = _self.Cluster
+	get.Cluster = _self.Cluster
 	get.Namespaces = strings.Split(_self.Namespaces, ",")
 
 	// Fetching release sources.

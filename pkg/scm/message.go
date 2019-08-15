@@ -32,7 +32,7 @@ type ReleaseMeta struct {
 }
 
 type GenericInfo struct {
-	Group      string      `json:"group"`
+	Cluster    string      `json:"cluster"`
 	Namespaces []string    `json:"namespaces"`
 	Meta       ReleaseMeta `json:"meta"`
 }
