@@ -29,6 +29,14 @@ var (
 	releaseICache *ReleaseInstance
 )
 
+func GetHostName() string {
+	hostAddr, err := os.Hostname();
+	if err != nil {
+		log.Panicf("Failed to Get local hostAddr. %s", err)
+	}
+	return hostAddr;
+}
+
 /**
  * Get hardware information and process unique identification.
  */
